@@ -1,9 +1,3 @@
-Got it — you want a README.md for your ai-games project.
-
-Since this sounds like a retro-themed HTML/CSS/JS mini-game collection, here’s a clean and attractive README you can drop in your repo:
-
-⸻
-
 
 # 🎮 AI Games Arcade
 
@@ -88,9 +82,3 @@ This project is licensed under the MIT License — free to use and modify.
 
 Created by Himanshu ✨
 Pixel fonts from Google Fonts
-Sound effects from OpenGameArt
-
----
-
-If you want, I can **also add a retro-styled ASCII logo** at the top of the README so it matches your arcade vibe.  
-Want me to do that?
