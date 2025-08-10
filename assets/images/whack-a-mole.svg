@@ -1,0 +1,32 @@
+<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="100" height="100" fill="#1a1a2e"/>
+  
+  <!-- Holes -->
+  <circle cx="25" cy="25" r="10" fill="#333333"/>
+  <circle cx="50" cy="25" r="10" fill="#333333"/>
+  <circle cx="75" cy="25" r="10" fill="#333333"/>
+  <circle cx="25" cy="50" r="10" fill="#333333"/>
+  <circle cx="50" cy="50" r="10" fill="#333333"/>
+  <circle cx="75" cy="50" r="10" fill="#333333"/>
+  <circle cx="25" cy="75" r="10" fill="#333333"/>
+  <circle cx="50" cy="75" r="10" fill="#333333"/>
+  <circle cx="75" cy="75" r="10" fill="#333333"/>
+  
+  <!-- Moles -->
+  <circle cx="25" cy="22" r="8" fill="#aa5500"/>
+  <circle cx="75" cy="47" r="8" fill="#aa5500"/>
+  <circle cx="50" cy="72" r="8" fill="#aa5500"/>
+  
+  <!-- Mole Eyes -->
+  <circle cx="22" cy="20" r="2" fill="#000000"/>
+  <circle cx="28" cy="20" r="2" fill="#000000"/>
+  <circle cx="72" cy="45" r="2" fill="#000000"/>
+  <circle cx="78" cy="45" r="2" fill="#000000"/>
+  <circle cx="47" cy="70" r="2" fill="#000000"/>
+  <circle cx="53" cy="70" r="2" fill="#000000"/>
+  
+  <!-- Hammer -->
+  <rect x="60" y="30" width="5" height="20" fill="#dddddd" transform="rotate(45, 60, 30)"/>
+  <rect x="55" y="25" width="10" height="10" fill="#ff0000" transform="rotate(45, 60, 30)"/>
+</svg>

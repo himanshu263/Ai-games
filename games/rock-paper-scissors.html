@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rock Paper Scissors - Retro Arcade</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/games.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap">
+    <style>
+        #game-container {
+            width: 600px;
+            height: 500px;
+            margin: 0 auto;
+            background-color: #000;
+            position: relative;
+            border: 5px solid #ffcc00;
+            box-shadow: 0 0 20px #ffcc00;
+            overflow: hidden;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            color: #ffcc00;
+        }
+        
+        .score {
+            font-size: 24px;
+            text-shadow: 0 0 5px #ffcc00;
+        }
+        
+        .battle-area {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            height: 200px;
+        }
+        
+        .player-choice, .computer-choice {
+            width: 150px;
+            height: 150px;
+            background-color: #222;
+            border: 3px solid #ffcc00;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 60px;
+        }
+        
+        .vs {
+            font-size: 36px;
+            color: #ff0000;
+            text-shadow: 0 0 10px #ff0000;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        
+        .result {
+            font-size: 24px;
+            color: #fff;
+            text-align: center;
+            height: 30px;
+            margin: 20px 0;
+        }
+        
+        .win { color: #00ff00; text-shadow: 0 0 5px #00ff00; }
+        .lose { color: #ff0000; text-shadow: 0 0 5px #ff0000; }
+        .draw { color: #ffcc00; text-shadow: 0 0 5px #ffcc00; }
+        
+        .choices {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+        }
+        
+        .choice-btn {
+            width: 100px;
+            height: 100px;
+            background-color: #222;
+            border: 3px solid #ffcc00;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 40px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .choice-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 15px #ffcc00;
+        }
+        
+        .choice-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .choice-label {
+            text-align: center;
+            color: #ffcc00;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        
+        .choice-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        #score-container {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+            color: #ffcc00;
+            text-shadow: 0 0 5px #ffcc00;
+        }
+        
+        @media (max-width: 650px) {
+            #game-container {
+                width: 320px;
+                height: 450px;
+                padding: 10px;
+            }
+            
+            .player-choice, .computer-choice {
+                width: 100px;
+                height: 100px;
+                font-size: 40px;
+            }
+            
+            .vs {
+                font-size: 24px;
+            }
+            
+            .choice-btn {
+                width: 70px;
+                height: 70px;
+                font-size: 30px;
+            }
+            
+            .choice-label {
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-container">
+        <div class="stars"></div>
+    </div>
+
+    <header>
+        <h1 class="neon-title">Rock Paper Scissors</h1>
+        <a href="../index.html" class="back-btn">← Back to Arcade</a>
+    </header>
+
+    <main>
+        <div id="score-container">
+            <div>
+                <h2>Player: <span id="player-score">0</span></h2>
+            </div>
+            <div>
+                <h2>Computer: <span id="computer-score">0</span></h2>
+            </div>
+        </div>
+        
+        <div id="game-container">
+            <div class="battle-area">
+                <div class="player-choice" id="player-display">?</div>
+                <div class="vs">VS</div>
+                <div class="computer-choice" id="computer-display">?</div>
+            </div>
+            
+            <div class="result" id="result">Choose your weapon!</div>
+            
+            <div class="choices">
+                <div class="choice-container">
+                    <div class="choice-btn" id="rock">✊</div>
+                    <div class="choice-label">Rock</div>
+                </div>
+                <div class="choice-container">
+                    <div class="choice-btn" id="paper">✋</div>
+                    <div class="choice-label">Paper</div>
+                </div>
+                <div class="choice-container">
+                    <div class="choice-btn" id="scissors">✌️</div>
+                    <div class="choice-label">Scissors</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2023 Retro Arcade | All games playable in browser</p>
+    </footer>
+
+    <audio id="select-sound" src="../assets/audio/hit.mp3" preload="auto"></audio>
+    <audio id="win-sound" src="../assets/audio/explosion.mp3" preload="auto"></audio>
+    <audio id="lose-sound" src="../assets/audio/wall.mp3" preload="auto"></audio>
+    <audio id="draw-sound" src="../assets/audio/laser.mp3" preload="auto"></audio>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Game elements
+            const playerDisplay = document.getElementById('player-display');
+            const computerDisplay = document.getElementById('computer-display');
+            const resultDisplay = document.getElementById('result');
+            const playerScoreDisplay = document.getElementById('player-score');
+            const computerScoreDisplay = document.getElementById('computer-score');
+            const rockBtn = document.getElementById('rock');
+            const paperBtn = document.getElementById('paper');
+            const scissorsBtn = document.getElementById('scissors');
+            
+            // Sound elements
+            const selectSound = document.getElementById('select-sound');
+            const winSound = document.getElementById('win-sound');
+            const loseSound = document.getElementById('lose-sound');
+            const drawSound = document.getElementById('draw-sound');
+            
+            // Game variables
+            let playerScore = 0;
+            let computerScore = 0;
+            let isAnimating = false;
+            
+            // Choice symbols
+            const choices = {
+                rock: '✊',
+                paper: '✋',
+                scissors: '✌️'
+            };
+            
+            // Initialize game
+            function initGame() {
+                playerScore = 0;
+                computerScore = 0;
+                playerScoreDisplay.textContent = playerScore;
+                computerScoreDisplay.textContent = computerScore;
+                playerDisplay.textContent = '?';
+                computerDisplay.textContent = '?';
+                resultDisplay.textContent = 'Choose your weapon!';
+                resultDisplay.className = 'result';
+            }
+            
+            // Play round
+            function playRound(playerChoice) {
+                if (isAnimating) return;
+                isAnimating = true;
+                
+                // Play select sound
+                selectSound.currentTime = 0;
+                selectSound.play().catch(e => console.log('Audio play error:', e));
+                
+                // Show player choice
+                playerDisplay.textContent = choices[playerChoice];
+                
+                // Animate computer thinking
+                let counter = 0;
+                const thinkingInterval = setInterval(() => {
+                    const thinkingChoices = Object.values(choices);
+                    computerDisplay.textContent = thinkingChoices[counter % thinkingChoices.length];
+                    counter++;
+                    
+                    if (counter > 10) {
+                        clearInterval(thinkingInterval);
+                        determineWinner(playerChoice);
+                    }
+                }, 100);
+            }
+            
+            // Determine winner
+            function determineWinner(playerChoice) {
+                // Get random computer choice
+                const choices = ['rock', 'paper', 'scissors'];
+                const computerChoice = choices[Math.floor(Math.random() * choices.length)];
+                
+                // Show computer choice
+                computerDisplay.textContent = window.choices[computerChoice];
+                
+                // Determine winner
+                let result;
+                
+                if (playerChoice === computerChoice) {
+                    result = 'It\'s a draw!';
+                    resultDisplay.className = 'result draw';
+                    drawSound.currentTime = 0;
+                    drawSound.play().catch(e => console.log('Audio play error:', e));
+                } else if (
+                    (playerChoice === 'rock' && computerChoice === 'scissors') ||
+                    (playerChoice === 'paper' && computerChoice === 'rock') ||
+                    (playerChoice === 'scissors' && computerChoice === 'paper')
+                ) {
+                    result = 'You win!';
+                    resultDisplay.className = 'result win';
+                    playerScore++;
+                    playerScoreDisplay.textContent = playerScore;
+                    winSound.currentTime = 0;
+                    winSound.play().catch(e => console.log('Audio play error:', e));
+                } else {
+                    result = 'Computer wins!';
+                    resultDisplay.className = 'result lose';
+                    computerScore++;
+                    computerScoreDisplay.textContent = computerScore;
+                    loseSound.currentTime = 0;
+                    loseSound.play().catch(e => console.log('Audio play error:', e));
+                }
+                
+                resultDisplay.textContent = result;
+                
+                // Reset animation flag
+                setTimeout(() => {
+                    isAnimating = false;
+                }, 1000);
+            }
+            
+            // Event listeners
+            rockBtn.addEventListener('click', () => playRound('rock'));
+            paperBtn.addEventListener('click', () => playRound('paper'));
+            scissorsBtn.addEventListener('click', () => playRound('scissors'));
+            
+            // Start game
+            initGame();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Invaders - Retro Arcade</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/games.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap">
+    <style>
+        #game-container {
+            width: 600px;
+            height: 500px;
+            margin: 0 auto;
+            background-color: #000;
+            position: relative;
+            border: 5px solid #00ff00;
+            box-shadow: 0 0 20px #00ff00;
+            overflow: hidden;
+        }
+        
+        #player {
+            width: 40px;
+            height: 20px;
+            background-color: #00ff00;
+            position: absolute;
+            bottom: 20px;
+            left: 280px;
+        }
+        
+        .laser {
+            width: 3px;
+            height: 15px;
+            background-color: #ff0000;
+            position: absolute;
+        }
+        
+        .enemy {
+            width: 30px;
+            height: 30px;
+            position: absolute;
+            background-size: contain;
+            background-repeat: no-repeat;
+        }
+        
+        .enemy-type-1 {
+            background-color: #00ff00;
+        }
+        
+        .enemy-type-2 {
+            background-color: #ff00ff;
+        }
+        
+        .enemy-type-3 {
+            background-color: #ffff00;
+        }
+        
+        .enemy-laser {
+            width: 3px;
+            height: 15px;
+            background-color: #00ffff;
+            position: absolute;
+        }
+        
+        .explosion {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background-color: #ff6600;
+            border-radius: 50%;
+            animation: explode 0.3s forwards;
+        }
+        
+        @keyframes explode {
+            0% { transform: scale(0.5); opacity: 1; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+        
+        #score-container {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+            color: #00ff00;
+            text-shadow: 0 0 5px #00ff00;
+        }
+        
+        #lives {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .life {
+            width: 20px;
+            height: 10px;
+            background-color: #00ff00;
+        }
+        
+        #game-over {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #ff0000;
+            font-size: 24px;
+            display: none;
+        }
+        
+        #restart-btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #00ff00;
+            color: #000;
+            border: none;
+            cursor: pointer;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 16px;
+        }
+        
+        #controls {
+            margin-top: 20px;
+            text-align: center;
+            color: #fff;
+            font-size: 0.8rem;
+        }
+        
+        @media (max-width: 650px) {
+            #game-container {
+                width: 320px;
+                height: 400px;
+            }
+            
+            #player {
+                width: 30px;
+                height: 15px;
+                left: 145px;
+            }
+            
+            .enemy {
+                width: 25px;
+                height: 25px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-container">
+        <div class="stars"></div>
+    </div>
+
+    <header>
+        <h1 class="neon-title">Space Invaders</h1>
+        <a href="../index.html" class="back-btn">← Back to Arcade</a>
+    </header>
+
+    <main>
+        <div id="score-container">
+            <div>
+                <h2>Score: <span id="score">0</span></h2>
+            </div>
+            <div id="lives">
+                <div class="life"></div>
+                <div class="life"></div>
+                <div class="life"></div>
+            </div>
+        </div>
+        
+        <div id="game-container">
+            <div id="player"></div>
+            <div id="game-over">
+                <h2>GAME OVER</h2>
+                <p>Your Score: <span id="final-score">0</span></p>
+                <button id="restart-btn">Play Again</button>
+            </div>
+        </div>
+        
+        <div id="controls">
+            <p>← → : Move left/right | Space : Shoot</p>
+            <p>Mobile: Touch left/right side to move, tap middle to shoot</p>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2023 Retro Arcade | All games playable in browser</p>
+    </footer>
+
+    <audio id="laser-sound" src="../assets/audio/laser.mp3" preload="auto"></audio>
+    <audio id="explosion-sound" src="../assets/audio/explosion.mp3" preload="auto"></audio>
+    <audio id="hit-sound" src="../assets/audio/hit.mp3" preload="auto"></audio>
+    <audio id="game-over-sound" src="../assets/audio/game-over.mp3" preload="auto"></audio>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Game elements
+            const gameContainer = document.getElementById('game-container');
+            const player = document.getElementById('player');
+            const scoreElement = document.getElementById('score');
+            const livesContainer = document.getElementById('lives');
+            const finalScoreElement = document.getElementById('final-score');
+            const gameOverElement = document.getElementById('game-over');
+            const restartBtn = document.getElementById('restart-btn');
+            
+            // Sound elements
+            const laserSound = document.getElementById('laser-sound');
+            const explosionSound = document.getElementById('explosion-sound');
+            const hitSound = document.getElementById('hit-sound');
+            const gameOverSound = document.getElementById('game-over-sound');
+            
+            // Game variables
+            let gameWidth, gameHeight, playerWidth, playerSpeed;
+            let playerX, score, lives, isGameOver;
+            let enemies = [];
+            let lasers = [];
+            let enemyLasers = [];
+            let moveDirection = 'right';
+            let moveDownNext = false;
+            let enemySpeed = 1;
+            let lastTime = 0;
+            let enemyShootInterval;
+            let animationFrameId;
+            
+            // Initialize game
+            function initGame() {
+                // Set dimensions based on container size
+                gameWidth = gameContainer.clientWidth;
+                gameHeight = gameContainer.clientHeight;
+                playerWidth = parseInt(window.getComputedStyle(player).width);
+                playerSpeed = gameWidth * 0.01;
+                
+                // Reset game variables
+                playerX = (gameWidth - playerWidth) / 2;
+                score = 0;
+                lives = 3;
+                isGameOver = false;
+                enemies = [];
+                lasers = [];
+                enemyLasers = [];
+                moveDirection = 'right';
+                moveDownNext = false;
+                enemySpeed = 1;
+                
+                // Update display
+                scoreElement.textContent = score;
+                updateLives();
+                gameOverElement.style.display = 'none';
+                
+                // Remove existing enemies and lasers
+                document.querySelectorAll('.enemy, .laser, .enemy-laser, .explosion').forEach(el => el.remove());
+                
+                // Create enemies
+                createEnemies();
+                
+                // Start enemy shooting
+                clearInterval(enemyShootInterval);
+                enemyShootInterval = setInterval(enemyShoot, 1500);
+                
+                // Start game loop
+                if (animationFrameId) {
+                    cancelAnimationFrame(animationFrameId);
+                }
+                gameLoop(0);
+            }
+            
+            // Create enemy grid
+            function createEnemies() {
+                const rows = 5;
+                const cols = 10;
+                const enemyWidth = 30;
+                const enemyHeight = 30;
+                const horizontalSpacing = 15;
+                const verticalSpacing = 15;
+                const startX = (gameWidth - (cols * (enemyWidth + horizontalSpacing) - horizontalSpacing)) / 2;
+                const startY = 50;
+                
+                for (let row = 0; row < rows; row++) {
+                    for (let col = 0; col < cols; col++) {
+                        const enemy = document.createElement('div');
+                        enemy.classList.add('enemy');
+                        
+                        // Different enemy types based on row
+                        if (row === 0) {
+                            enemy.classList.add('enemy-type-3');
+                        } else if (row === 1 || row === 2) {
+                            enemy.classList.add('enemy-type-2');
+                        } else {
+                            enemy.classList.add('enemy-type-1');
+                        }
+                        
+                        const x = startX + col * (enemyWidth + horizontalSpacing);
+                        const y = startY + row * (enemyHeight + verticalSpacing);
+                        
+                        enemy.style.left = `${x}px`;
+                        enemy.style.top = `${y}px`;
+                        
+                        gameContainer.appendChild(enemy);
+                        
+                        enemies.push({
+                            element: enemy,
+                            x: x,
+                            y: y,
+                            width: enemyWidth,
+                            height: enemyHeight,
+                            type: row === 0 ? 3 : (row <= 2 ? 2 : 1)
+                        });
+                    }
+                }
+            }
+            
+            // Update lives display
+            function updateLives() {
+                livesContainer.innerHTML = '';
+                for (let i = 0; i < lives; i++) {
+                    const life = document.createElement('div');
+                    life.classList.add('life');
+                    livesContainer.appendChild(life);
+                }
+            }
+            
+            // Player shoots laser
+            function shoot() {
+                if (isGameOver) return;
+                
+                const laser = document.createElement('div');
+                laser.classList.add('laser');
+                laser.style.left = `${playerX + playerWidth / 2 - 1.5}px`;
+                laser.style.bottom = '40px';
+                gameContainer.appendChild(laser);
+                
+                lasers.push({
+                    element: laser,
+                    x: playerX + playerWidth / 2 - 1.5,
+                    y: gameHeight - 40
+                });
+                
+                laserSound.currentTime = 0;
+                laserSound.play().catch(e => console.log('Audio play error:', e));
+            }
+            
+            // Enemy shoots laser
+            function enemyShoot() {
+                if (isGameOver || enemies.length === 0) return;
+                
+                // Select random enemy to shoot
+                const randomEnemy = enemies[Math.floor(Math.random() * enemies.length)];
+                
+                const laser = document.createElement('div');
+                laser.classList.add('enemy-laser');
+                laser.style.left = `${randomEnemy.x + randomEnemy.width / 2 - 1.5}px`;
+                laser.style.top = `${randomEnemy.y + randomEnemy.height}px`;
+                gameContainer.appendChild(laser);
+                
+                enemyLasers.push({
+                    element: laser,
+                    x: randomEnemy.x + randomEnemy.width / 2 - 1.5,
+                    y: randomEnemy.y + randomEnemy.height
+                });
+            }
+            
+            // Create explosion effect
+            function createExplosion(x, y) {
+                const explosion = document.createElement('div');
+                explosion.classList.add('explosion');
+                explosion.style.left = `${x}px`;
+                explosion.style.top = `${y}px`;
+                gameContainer.appendChild(explosion);
+                
+                // Remove explosion after animation
+                setTimeout(() => {
+                    explosion.remove();
+                }, 300);
+            }
+            
+            // Update game state
+            function update(deltaTime) {
+                if (isGameOver) return;
+                
+                // Move player
+                if (keys.ArrowLeft && playerX > 0) {
+                    playerX -= playerSpeed * deltaTime;
+                }
+                if (keys.ArrowRight && playerX < gameWidth - playerWidth) {
+                    playerX += playerSpeed * deltaTime;
+                }
+                
+                // Keep player within bounds
+                playerX = Math.max(0, Math.min(gameWidth - playerWidth, playerX));
+                player.style.left = `${playerX}px`;
+                
+                // Move lasers
+                lasers.forEach((laser, index) => {
+                    laser.y -= 5;
+                    laser.element.style.top = `${laser.y}px`;
+                    
+                    // Remove laser if it goes off screen
+                    if (laser.y < 0) {
+                        laser.element.remove();
+                        lasers.splice(index, 1);
+                    }
+                    
+                    // Check for collision with enemies
+                    enemies.forEach((enemy, enemyIndex) => {
+                        if (isColliding(laser, enemy)) {
+                            // Remove laser
+                            laser.element.remove();
+                            lasers.splice(index, 1);
+                            
+                            // Create explosion
+                            createExplosion(enemy.x, enemy.y);
+                            
+                            // Remove enemy
+                            enemy.element.remove();
+                            enemies.splice(enemyIndex, 1);
+                            
+                            // Increase score based on enemy type
+                            score += enemy.type * 10;
+                            scoreElement.textContent = score;
+                            
+                            // Play explosion sound
+                            explosionSound.currentTime = 0;
+                            explosionSound.play().catch(e => console.log('Audio play error:', e));
+                            
+                            // Increase enemy speed slightly
+                            enemySpeed += 0.05;
+                        }
+                    });
+                });
+                
+                // Move enemy lasers
+                enemyLasers.forEach((laser, index) => {
+                    laser.y += 3;
+                    laser.element.style.top = `${laser.y}px`;
+                    
+                    // Remove laser if it goes off screen
+                    if (laser.y > gameHeight) {
+                        laser.element.remove();
+                        enemyLasers.splice(index, 1);
+                    }
+                    
+                    // Check for collision with player
+                    if (isColliding(laser, {
+                        x: playerX,
+                        y: gameHeight - 40,
+                        width: playerWidth,
+                        height: 20
+                    })) {
+                        // Remove laser
+                        laser.element.remove();
+                        enemyLasers.splice(index, 1);
+                        
+                        // Player hit
+                        playerHit();
+                    }
+                });
+                
+                // Move enemies
+                if (enemies.length > 0) {
+                    let moveDown = false;
+                    
+                    if (moveDownNext) {
+                        // Move enemies down
+                        enemies.forEach(enemy => {
+                            enemy.y += 20;
+                            enemy.element.style.top = `${enemy.y}px`;
+                        });
+                        moveDownNext = false;
+                        moveDirection = moveDirection === 'right' ? 'left' : 'right';
+                    } else {
+                        // Find leftmost and rightmost enemies
+                        let leftmost = gameWidth;
+                        let rightmost = 0;
+                        
+                        enemies.forEach(enemy => {
+                            leftmost = Math.min(leftmost, enemy.x);
+                            rightmost = Math.max(rightmost, enemy.x + enemy.width);
+                        });
+                        
+                        // Check if enemies hit the edge
+                        if (moveDirection === 'right' && rightmost >= gameWidth - 10) {
+                            moveDownNext = true;
+                        } else if (moveDirection === 'left' && leftmost <= 10) {
+                            moveDownNext = true;
+                        }
+                        
+                        // Move enemies horizontally
+                        const moveAmount = moveDirection === 'right' ? enemySpeed : -enemySpeed;
+                        enemies.forEach(enemy => {
+                            enemy.x += moveAmount;
+                            enemy.element.style.left = `${enemy.x}px`;
+                        });
+                    }
+                    
+                    // Check if enemies reached the bottom
+                    enemies.forEach(enemy => {
+                        if (enemy.y + enemy.height >= gameHeight - 40) {
+                            gameOver();
+                        }
+                    });
+                } else if (!isGameOver) {
+                    // All enemies defeated, create new wave
+                    enemySpeed += 0.5;
+                    createEnemies();
+                }
+            }
+            
+            // Check collision between two objects
+            function isColliding(obj1, obj2) {
+                return obj1.x < obj2.x + obj2.width &&
+                       obj1.x + 3 > obj2.x &&
+                       obj1.y < obj2.y + obj2.height &&
+                       obj1.y + 15 > obj2.y;
+            }
+            
+            // Player hit by enemy laser
+            function playerHit() {
+                lives--;
+                updateLives();
+                
+                hitSound.currentTime = 0;
+                hitSound.play().catch(e => console.log('Audio play error:', e));
+                
+                // Create explosion at player position
+                createExplosion(playerX, gameHeight - 40);
+                
+                // Game over if no lives left
+                if (lives <= 0) {
+                    gameOver();
+                }
+            }
+            
+            // Game over
+            function gameOver() {
+                isGameOver = true;
+                clearInterval(enemyShootInterval);
+                finalScoreElement.textContent = score;
+                gameOverElement.style.display = 'flex';
+                gameOverSound.play().catch(e => console.log('Audio play error:', e));
+            }
+            
+            // Game loop
+            function gameLoop(timestamp) {
+                const deltaTime = timestamp - lastTime;
+                lastTime = timestamp;
+                
+                update(deltaTime / 16); // Normalize to ~60fps
+                
+                animationFrameId = requestAnimationFrame(gameLoop);
+            }
+            
+            // Keyboard input
+            const keys = {};
+            
+            document.addEventListener('keydown', (e) => {
+                keys[e.key] = true;
+                
+                // Shoot on space
+                if (e.key === ' ' && !isGameOver) {
+                    shoot();
+                }
+            });
+            
+            document.addEventListener('keyup', (e) => {
+                keys[e.key] = false;
+            });
+            
+            // Touch controls for mobile
+            gameContainer.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                
+                const touch = e.touches[0];
+                const gameRect = gameContainer.getBoundingClientRect();
+                const touchX = touch.clientX - gameRect.left;
+                
+                // Divide screen into three sections
+                if (touchX < gameWidth / 3) {
+                    // Left third - move left
+                    keys.ArrowLeft = true;
+                    keys.ArrowRight = false;
+                } else if (touchX > gameWidth * 2 / 3) {
+                    // Right third - move right
+                    keys.ArrowLeft = false;
+                    keys.ArrowRight = true;
+                } else {
+                    // Middle third - shoot
+                    shoot();
+                }
+            }, { passive: false });
+            
+            gameContainer.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                keys.ArrowLeft = false;
+                keys.ArrowRight = false;
+            }, { passive: false });
+            
+            // Restart game
+            restartBtn.addEventListener('click', initGame);
+            
+            // Handle window resize
+            window.addEventListener('resize', () => {
+                // Recalculate dimensions and reset game
+                initGame();
+            });
+            
+            // Start game
+            initGame();
+        });
+    </script>
+</body>
+</html>

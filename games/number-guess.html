@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Number Guessing Game - Retro Arcade</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/games.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap">
+    <style>
+        #game-container {
+            width: 600px;
+            height: 500px;
+            margin: 0 auto;
+            background-color: #000;
+            position: relative;
+            border: 5px solid #ffff00;
+            box-shadow: 0 0 20px #ffff00;
+            overflow: hidden;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .game-title {
+            color: #ffff00;
+            text-shadow: 0 0 10px #ffff00;
+            font-size: 28px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .game-info {
+            color: #fff;
+            font-size: 18px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .range-container {
+            display: flex;
+            justify-content: space-between;
+            width: 80%;
+            margin-bottom: 20px;
+        }
+        
+        .range-btn {
+            padding: 10px 15px;
+            background-color: #222;
+            color: #fff;
+            border: 2px solid #ffff00;
+            cursor: pointer;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .range-btn.active {
+            background-color: #ffff00;
+            color: #000;
+        }
+        
+        .guess-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+            width: 80%;
+        }
+        
+        #guess-input {
+            width: 100%;
+            padding: 10px;
+            font-size: 18px;
+            text-align: center;
+            background-color: #222;
+            color: #fff;
+            border: 2px solid #ffff00;
+            margin-bottom: 10px;
+            font-family: 'Press Start 2P', cursive;
+        }
+        
+        #guess-btn {
+            padding: 10px 20px;
+            background-color: #ffff00;
+            color: #000;
+            border: none;
+            cursor: pointer;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        #guess-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 10px #ffff00;
+        }
+        
+        .message {
+            color: #fff;
+            font-size: 18px;
+            margin: 20px 0;
+            text-align: center;
+            height: 50px;
+        }
+        
+        .high { color: #ff0000; text-shadow: 0 0 5px #ff0000; }
+        .low { color: #0000ff; text-shadow: 0 0 5px #0000ff; }
+        .correct { color: #00ff00; text-shadow: 0 0 5px #00ff00; }
+        
+        .history-container {
+            width: 80%;
+            margin-top: 20px;
+            border: 2px solid #ffff00;
+            padding: 10px;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+        
+        .history-title {
+            color: #ffff00;
+            font-size: 16px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .history-list {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .history-item {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #222;
+            color: #fff;
+            border: 1px solid #ffff00;
+        }
+        
+        .history-item.high { border-color: #ff0000; }
+        .history-item.low { border-color: #0000ff; }
+        .history-item.correct { border-color: #00ff00; }
+        
+        .stats-container {
+            display: flex;
+            justify-content: space-between;
+            width: 80%;
+            margin-top: 20px;
+        }
+        
+        .stat {
+            color: #ffff00;
+            font-size: 14px;
+        }
+        
+        @media (max-width: 650px) {
+            #game-container {
+                width: 320px;
+                height: 480px;
+                padding: 10px;
+            }
+            
+            .game-title {
+                font-size: 20px;
+            }
+            
+            .game-info {
+                font-size: 14px;
+            }
+            
+            .range-btn {
+                font-size: 10px;
+                padding: 8px 10px;
+            }
+            
+            #guess-input {
+                font-size: 14px;
+            }
+            
+            #guess-btn {
+                font-size: 14px;
+            }
+            
+            .message {
+                font-size: 14px;
+            }
+            
+            .history-title {
+                font-size: 12px;
+            }
+            
+            .history-item {
+                width: 30px;
+                height: 30px;
+                font-size: 12px;
+            }
+            
+            .stat {
+                font-size: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-container">
+        <div class="stars"></div>
+    </div>
+
+    <header>
+        <h1 class="neon-title">Number Guess</h1>
+        <a href="../index.html" class="back-btn">← Back to Arcade</a>
+    </header>
+
+    <main>
+        <div id="game-container">
+            <h2 class="game-title">Guess The Number!</h2>
+            <p class="game-info" id="game-info">I'm thinking of a number between 1 and 100</p>
+            
+            <div class="range-container">
+                <button class="range-btn active" id="range-100">1-100</button>
+                <button class="range-btn" id="range-500">1-500</button>
+                <button class="range-btn" id="range-1000">1-1000</button>
+            </div>
+            
+            <div class="guess-container">
+                <input type="number" id="guess-input" placeholder="Enter your guess" min="1" max="100">
+                <button id="guess-btn">Guess!</button>
+            </div>
+            
+            <div class="message" id="message"></div>
+            
+            <div class="history-container">
+                <h3 class="history-title">Your Guesses</h3>
+                <div class="history-list" id="history-list"></div>
+            </div>
+            
+            <div class="stats-container">
+                <div class="stat">Attempts: <span id="attempts">0</span></div>
+                <div class="stat">Best: <span id="best-score">-</span></div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2023 Retro Arcade | All games playable in browser</p>
+    </footer>
+
+    <audio id="guess-sound" src="../assets/audio/hit.mp3" preload="auto"></audio>
+    <audio id="correct-sound" src="../assets/audio/explosion.mp3" preload="auto"></audio>
+    <audio id="wrong-sound" src="../assets/audio/wall.mp3" preload="auto"></audio>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Game elements
+            const gameInfo = document.getElementById('game-info');
+            const guessInput = document.getElementById('guess-input');
+            const guessBtn = document.getElementById('guess-btn');
+            const message = document.getElementById('message');
+            const historyList = document.getElementById('history-list');
+            const attemptsDisplay = document.getElementById('attempts');
+            const bestScoreDisplay = document.getElementById('best-score');
+            const range100Btn = document.getElementById('range-100');
+            const range500Btn = document.getElementById('range-500');
+            const range1000Btn = document.getElementById('range-1000');
+            
+            // Sound elements
+            const guessSound = document.getElementById('guess-sound');
+            const correctSound = document.getElementById('correct-sound');
+            const wrongSound = document.getElementById('wrong-sound');
+            
+            // Game variables
+            let targetNumber;
+            let minRange = 1;
+            let maxRange = 100;
+            let attempts = 0;
+            let gameActive = true;
+            let guessHistory = [];
+            let bestScores = {
+                '100': localStorage.getItem('bestScore100') || '-',
+                '500': localStorage.getItem('bestScore500') || '-',
+                '1000': localStorage.getItem('bestScore1000') || '-'
+            };
+            
+            // Initialize game
+            function initGame() {
+                targetNumber = Math.floor(Math.random() * (maxRange - minRange + 1)) + minRange;
+                attempts = 0;
+                gameActive = true;
+                guessHistory = [];
+                
+                gameInfo.textContent = `I'm thinking of a number between ${minRange} and ${maxRange}`;
+                message.textContent = '';
+                message.className = 'message';
+                historyList.innerHTML = '';
+                attemptsDisplay.textContent = '0';
+                bestScoreDisplay.textContent = bestScores[maxRange] || '-';
+                
+                guessInput.value = '';
+                guessInput.min = minRange;
+                guessInput.max = maxRange;
+                guessInput.placeholder = `Enter your guess (${minRange}-${maxRange})`;
+                guessInput.focus();
+            }
+            
+            // Handle guess
+            function handleGuess() {
+                if (!gameActive) {
+                    initGame();
+                    return;
+                }
+                
+                const guess = parseInt(guessInput.value);
+                
+                if (isNaN(guess) || guess < minRange || guess > maxRange) {
+                    message.textContent = `Please enter a valid number between ${minRange} and ${maxRange}`;
+                    message.className = 'message';
+                    wrongSound.currentTime = 0;
+                    wrongSound.play().catch(e => console.log('Audio play error:', e));
+                    return;
+                }
+                
+                attempts++;
+                attemptsDisplay.textContent = attempts;
+                
+                guessSound.currentTime = 0;
+                guessSound.play().catch(e => console.log('Audio play error:', e));
+                
+                // Add to history
+                const historyItem = document.createElement('div');
+                historyItem.textContent = guess;
+                historyItem.className = 'history-item';
+                
+                if (guess === targetNumber) {
+                    message.textContent = `Correct! The number was ${targetNumber}. Click 'Guess!' to play again.`;
+                    message.className = 'message correct';
+                    historyItem.classList.add('correct');
+                    gameActive = false;
+                    
+                    // Update best score
+                    if (bestScores[maxRange] === '-' || attempts < parseInt(bestScores[maxRange])) {
+                        bestScores[maxRange] = attempts;
+                        localStorage.setItem(`bestScore${maxRange}`, attempts);
+                        bestScoreDisplay.textContent = attempts;
+                    }
+                    
+                    correctSound.currentTime = 0;
+                    correctSound.play().catch(e => console.log('Audio play error:', e));
+                    
+                    guessBtn.textContent = 'Play Again';
+                } else if (guess < targetNumber) {
+                    message.textContent = 'Too low! Try a higher number.';
+                    message.className = 'message low';
+                    historyItem.classList.add('low');
+                    
+                    wrongSound.currentTime = 0;
+                    wrongSound.play().catch(e => console.log('Audio play error:', e));
+                } else {
+                    message.textContent = 'Too high! Try a lower number.';
+                    message.className = 'message high';
+                    historyItem.classList.add('high');
+                    
+                    wrongSound.currentTime = 0;
+                    wrongSound.play().catch(e => console.log('Audio play error:', e));
+                }
+                
+                historyList.appendChild(historyItem);
+                guessHistory.push(guess);
+                
+                guessInput.value = '';
+                guessInput.focus();
+            }
+            
+            // Set range
+            function setRange(range) {
+                minRange = 1;
+                maxRange = range;
+                
+                // Update active button
+                range100Btn.classList.remove('active');
+                range500Btn.classList.remove('active');
+                range1000Btn.classList.remove('active');
+                
+                switch (range) {
+                    case 100:
+                        range100Btn.classList.add('active');
+                        break;
+                    case 500:
+                        range500Btn.classList.add('active');
+                        break;
+                    case 1000:
+                        range1000Btn.classList.add('active');
+                        break;
+                }
+                
+                // Reset game
+                guessBtn.textContent = 'Guess!';
+                initGame();
+            }
+            
+            // Event listeners
+            guessBtn.addEventListener('click', handleGuess);
+            
+            guessInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    handleGuess();
+                }
+            });
+            
+            range100Btn.addEventListener('click', () => setRange(100));
+            range500Btn.addEventListener('click', () => setRange(500));
+            range1000Btn.addEventListener('click', () => setRange(1000));
+            
+            // Start game
+            initGame();
+        });
+    </script>
+</body>
+</html>

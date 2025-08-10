@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake Game - Retro Arcade</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/games.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap">
+    <style>
+        #game-container {
+            width: 400px;
+            height: 400px;
+            margin: 0 auto;
+            background-color: #000;
+            position: relative;
+            border: 5px solid #00ff00;
+            box-shadow: 0 0 20px #00ff00;
+        }
+        
+        #game-board {
+            width: 100%;
+            height: 100%;
+            display: grid;
+            grid-template-columns: repeat(20, 1fr);
+            grid-template-rows: repeat(20, 1fr);
+        }
+        
+        .snake-part {
+            background-color: #00ff00;
+            border: 1px solid #003300;
+        }
+        
+        .food {
+            background-color: #ff0000;
+            border: 1px solid #330000;
+            border-radius: 50%;
+        }
+        
+        #score-container {
+            text-align: center;
+            margin: 20px 0;
+            color: #00ff00;
+            text-shadow: 0 0 5px #00ff00;
+        }
+        
+        #game-over {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #ff0000;
+            font-size: 24px;
+            display: none;
+        }
+        
+        #restart-btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #00ff00;
+            color: #000;
+            border: none;
+            cursor: pointer;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 16px;
+        }
+        
+        #controls {
+            margin-top: 20px;
+            text-align: center;
+            color: #fff;
+        }
+        
+        @media (max-width: 500px) {
+            #game-container {
+                width: 300px;
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-container">
+        <div class="stars"></div>
+    </div>
+
+    <header>
+        <h1 class="neon-title">Snake Game</h1>
+        <a href="../index.html" class="back-btn">← Back to Arcade</a>
+    </header>
+
+    <main>
+        <div id="score-container">
+            <h2>Score: <span id="score">0</span></h2>
+        </div>
+        
+        <div id="game-container">
+            <div id="game-board"></div>
+            <div id="game-over">
+                <h2>GAME OVER</h2>
+                <p>Your Score: <span id="final-score">0</span></p>
+                <button id="restart-btn">Play Again</button>
+            </div>
+        </div>
+        
+        <div id="controls">
+            <p>Use arrow keys to control the snake</p>
+            <p>Mobile: Swipe in the direction you want to go</p>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2023 Retro Arcade | All games playable in browser</p>
+    </footer>
+
+    <audio id="eat-sound" src="../assets/audio/eat.mp3" preload="auto"></audio>
+    <audio id="game-over-sound" src="../assets/audio/game-over.mp3" preload="auto"></audio>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Game elements
+            const gameBoard = document.getElementById('game-board');
+            const scoreElement = document.getElementById('score');
+            const finalScoreElement = document.getElementById('final-score');
+            const gameOverElement = document.getElementById('game-over');
+            const restartBtn = document.getElementById('restart-btn');
+            const eatSound = document.getElementById('eat-sound');
+            const gameOverSound = document.getElementById('game-over-sound');
+            
+            // Game variables
+            let snake = [{ x: 10, y: 10 }];
+            let food = { x: 5, y: 5 };
+            let direction = 'right';
+            let nextDirection = 'right';
+            let score = 0;
+            let gameSpeed = 150;
+            let gameInterval;
+            let touchStartX = 0;
+            let touchStartY = 0;
+            
+            // Initialize game
+            function initGame() {
+                snake = [{ x: 10, y: 10 }];
+                generateFood();
+                direction = 'right';
+                nextDirection = 'right';
+                score = 0;
+                scoreElement.textContent = score;
+                gameOverElement.style.display = 'none';
+                clearInterval(gameInterval);
+                gameInterval = setInterval(moveSnake, gameSpeed);
+                drawGame();
+            }
+            
+            // Generate food at random position
+            function generateFood() {
+                const gridSize = 20;
+                let newFood;
+                let foodOnSnake;
+                
+                do {
+                    foodOnSnake = false;
+                    newFood = {
+                        x: Math.floor(Math.random() * gridSize),
+                        y: Math.floor(Math.random() * gridSize)
+                    };
+                    
+                    // Check if food is on snake
+                    for (let part of snake) {
+                        if (part.x === newFood.x && part.y === newFood.y) {
+                            foodOnSnake = true;
+                            break;
+                        }
+                    }
+                } while (foodOnSnake);
+                
+                food = newFood;
+            }
+            
+            // Draw game elements
+            function drawGame() {
+                // Clear board
+                gameBoard.innerHTML = '';
+                
+                // Draw snake
+                snake.forEach((part, index) => {
+                    const snakePart = document.createElement('div');
+                    snakePart.classList.add('snake-part');
+                    snakePart.style.gridRowStart = part.y + 1;
+                    snakePart.style.gridColumnStart = part.x + 1;
+                    
+                    // Make head a different shade
+                    if (index === 0) {
+                        snakePart.style.backgroundColor = '#00aa00';
+                    }
+                    
+                    gameBoard.appendChild(snakePart);
+                });
+                
+                // Draw food
+                const foodElement = document.createElement('div');
+                foodElement.classList.add('food');
+                foodElement.style.gridRowStart = food.y + 1;
+                foodElement.style.gridColumnStart = food.x + 1;
+                gameBoard.appendChild(foodElement);
+            }
+            
+            // Move snake
+            function moveSnake() {
+                // Update direction
+                direction = nextDirection;
+                
+                // Create new head based on direction
+                const head = { ...snake[0] };
+                switch (direction) {
+                    case 'up':
+                        head.y--;
+                        break;
+                    case 'down':
+                        head.y++;
+                        break;
+                    case 'left':
+                        head.x--;
+                        break;
+                    case 'right':
+                        head.x++;
+                        break;
+                }
+                
+                // Check for collision with walls
+                if (head.x < 0 || head.x >= 20 || head.y < 0 || head.y >= 20) {
+                    gameOver();
+                    return;
+                }
+                
+                // Check for collision with self
+                for (let i = 0; i < snake.length; i++) {
+                    if (head.x === snake[i].x && head.y === snake[i].y) {
+                        gameOver();
+                        return;
+                    }
+                }
+                
+                // Add new head
+                snake.unshift(head);
+                
+                // Check if snake ate food
+                if (head.x === food.x && head.y === food.y) {
+                    // Increase score
+                    score += 10;
+                    scoreElement.textContent = score;
+                    
+                    // Play eat sound
+                    eatSound.currentTime = 0;
+                    eatSound.play().catch(e => console.log('Audio play error:', e));
+                    
+                    // Generate new food
+                    generateFood();
+                    
+                    // Increase speed slightly
+                    if (gameSpeed > 50) {
+                        gameSpeed -= 2;
+                        clearInterval(gameInterval);
+                        gameInterval = setInterval(moveSnake, gameSpeed);
+                    }
+                } else {
+                    // Remove tail if no food eaten
+                    snake.pop();
+                }
+                
+                // Draw updated game
+                drawGame();
+            }
+            
+            // Game over
+            function gameOver() {
+                clearInterval(gameInterval);
+                gameOverSound.play().catch(e => console.log('Audio play error:', e));
+                finalScoreElement.textContent = score;
+                gameOverElement.style.display = 'flex';
+            }
+            
+            // Handle keyboard input
+            document.addEventListener('keydown', (e) => {
+                switch (e.key) {
+                    case 'ArrowUp':
+                        if (direction !== 'down') nextDirection = 'up';
+                        break;
+                    case 'ArrowDown':
+                        if (direction !== 'up') nextDirection = 'down';
+                        break;
+                    case 'ArrowLeft':
+                        if (direction !== 'right') nextDirection = 'left';
+                        break;
+                    case 'ArrowRight':
+                        if (direction !== 'left') nextDirection = 'right';
+                        break;
+                }
+            });
+            
+            // Handle touch input for mobile
+            gameBoard.addEventListener('touchstart', (e) => {
+                touchStartX = e.changedTouches[0].screenX;
+                touchStartY = e.changedTouches[0].screenY;
+                e.preventDefault();
+            }, { passive: false });
+            
+            gameBoard.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+            }, { passive: false });
+            
+            gameBoard.addEventListener('touchend', (e) => {
+                const touchEndX = e.changedTouches[0].screenX;
+                const touchEndY = e.changedTouches[0].screenY;
+                const dx = touchEndX - touchStartX;
+                const dy = touchEndY - touchStartY;
+                
+                // Determine swipe direction
+                if (Math.abs(dx) > Math.abs(dy)) {
+                    // Horizontal swipe
+                    if (dx > 0 && direction !== 'left') {
+                        nextDirection = 'right';
+                    } else if (dx < 0 && direction !== 'right') {
+                        nextDirection = 'left';
+                    }
+                } else {
+                    // Vertical swipe
+                    if (dy > 0 && direction !== 'up') {
+                        nextDirection = 'down';
+                    } else if (dy < 0 && direction !== 'down') {
+                        nextDirection = 'up';
+                    }
+                }
+                
+                e.preventDefault();
+            }, { passive: false });
+            
+            // Restart game
+            restartBtn.addEventListener('click', initGame);
+            
+            // Start game
+            initGame();
+        });
+    </script>
+</body>
+</html>

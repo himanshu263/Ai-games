@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retro Arcade</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap">
+</head>
+<body>
+    <div class="background-container">
+        <div class="stars"></div>
+    </div>
+
+    <header>
+        <h1 class="neon-title">Retro Arcade</h1>
+        <div class="audio-control">
+            <button id="music-toggle" class="pixel-btn">
+                <span class="sound-on">🔊 Music On</span>
+                <span class="sound-off">🔇 Music Off</span>
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <div class="games-grid">
+            <!-- Game Cards -->
+            <div class="game-card" data-game="snake">
+                <div class="card-inner">
+                    <div class="card-front">
+                        <img src="assets/images/snake.svg" alt="Snake Game">
+                        <h3>Snake</h3>
+                    </div>
+                    <div class="card-back">
+                        <p>Classic Snake Game</p>
+                        <button class="play-btn">PLAY</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="game-card" data-game="tetris">
+                <div class="card-inner">
+                    <div class="card-front">
+                        <img src="assets/images/tetris.svg" alt="Tetris">
+                        <h3>Tetris</h3>
+                    </div>
+                    <div class="card-back">
+                        <p>Classic Block Puzzle</p>
+                        <button class="play-btn">PLAY</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="game-card" data-game="pong">
+                <div class="card-inner">
+                    <div class="card-front">
+                        <img src="assets/images/pong.svg" alt="Pong">
+                        <h3>Pong</h3>
+                    </div>
+                    <div class="card-back">
+                        <p>Table Tennis Classic</p>
+                        <button class="play-btn">PLAY</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="game-card" data-game="space-invaders">
+                <div class="card-inner">
+                    <div class="card-front">
+                        <img src="assets/images/space-invaders.svg" alt="Space Invaders">
+                        <h3>Space Invaders</h3>
+                    </div>
+                    <div class="card-back">
+                        <p>Defend Earth!</p>
+                        <button class="play-btn">PLAY</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="game-card" data-game="brick-breaker">
+                <div class="card-inner">
+                    <div class="card-front">
+                        <img src="assets/images/brick-breaker.svg" alt="Brick Breaker">
+                        <h3>Brick Breaker</h3>
+                    </div>
+                    <div class="card-back">
+                        <p>Break All Bricks</p>
+                        <button class="play-btn">PLAY</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="game-card" data-game="whack-a-mole">
+                <div class="card-inner">
+                    <div class="card-front">
+                        <img src="assets/images/whack-a-mole.svg" alt="Whack-a-Mole">
+                        <h3>Whack-a-Mole</h3>
+                    </div>
+                    <div class="card-back">
+                        <p>Test Your Reflexes</p>
+                        <button class="play-btn">PLAY</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="game-card" data-game="memory-match">
+                <div class="card-inner">
+                    <div class="card-front">
+                        <img src="assets/images/memory-match.svg" alt="Memory Match">
+                        <h3>Memory Match</h3>
+                    </div>
+                    <div class="card-back">
+                        <p>Find the Pairs</p>
+                        <button class="play-btn">PLAY</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="game-card" data-game="rock-paper-scissors">
+                <div class="card-inner">
+                    <div class="card-front">
+                        <img src="assets/images/rock-paper-scissors.svg" alt="Rock Paper Scissors">
+                        <h3>Rock Paper Scissors</h3>
+                    </div>
+                    <div class="card-back">
+                        <p>Classic Hand Game</p>
+                        <button class="play-btn">PLAY</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="game-card" data-game="flappy-bird">
+                <div class="card-inner">
+                    <div class="card-front">
+                        <img src="assets/images/flappy-bird.svg" alt="Flappy Bird">
+                        <h3>Flappy Bird</h3>
+                    </div>
+                    <div class="card-back">
+                        <p>Fly Through Pipes</p>
+                        <button class="play-btn">PLAY</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="game-card" data-game="tic-tac-toe">
+                <div class="card-inner">
+                    <div class="card-front">
+                        <img src="assets/images/tic-tac-toe.svg" alt="Tic Tac Toe">
+                        <h3>Tic Tac Toe</h3>
+                    </div>
+                    <div class="card-back">
+                        <p>X's and O's</p>
+                        <button class="play-btn">PLAY</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="game-card" data-game="number-guess">
+                <div class="card-inner">
+                    <div class="card-front">
+                        <img src="assets/images/number-guess.svg" alt="Number Guessing">
+                        <h3>Number Guess</h3>
+                    </div>
+                    <div class="card-back">
+                        <p>Guess the Number</p>
+                        <button class="play-btn">PLAY</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="game-card" data-game="platformer">
+                <div class="card-inner">
+                    <div class="card-front">
+                        <img src="assets/images/platformer.svg" alt="Platformer">
+                        <h3>Platformer</h3>
+                    </div>
+                    <div class="card-back">
+                        <p>Jump & Run</p>
+                        <button class="play-btn">PLAY</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Retro Arcade | All games playable in browser</p>
+    </footer>
+
+    <audio id="background-music" loop>
+        <source src="assets/audio/background-music.mp3" type="audio/mpeg">
+    </audio>
+
+    <script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pong - Retro Arcade</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/games.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap">
+    <style>
+        #game-container {
+            width: 600px;
+            height: 400px;
+            margin: 0 auto;
+            background-color: #000;
+            position: relative;
+            border: 5px solid #ffffff;
+            box-shadow: 0 0 20px #ffffff;
+            overflow: hidden;
+        }
+        
+        #paddle-left, #paddle-right {
+            width: 10px;
+            height: 80px;
+            background-color: #fff;
+            position: absolute;
+            top: 160px;
+        }
+        
+        #paddle-left {
+            left: 10px;
+        }
+        
+        #paddle-right {
+            right: 10px;
+        }
+        
+        #ball {
+            width: 15px;
+            height: 15px;
+            background-color: #fff;
+            position: absolute;
+            border-radius: 50%;
+            top: 192px;
+            left: 292px;
+        }
+        
+        #center-line {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(to bottom, #fff 50%, transparent 50%);
+            background-size: 20px 20px;
+            transform: translateX(-50%);
+        }
+        
+        #score-container {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+            color: #ffffff;
+            text-shadow: 0 0 5px #ffffff;
+            font-size: 2rem;
+        }
+        
+        #player-score, #computer-score {
+            margin: 0 30px;
+        }
+        
+        #game-over {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #ff0000;
+            font-size: 24px;
+            display: none;
+        }
+        
+        #restart-btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #ffffff;
+            color: #000;
+            border: none;
+            cursor: pointer;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 16px;
+        }
+        
+        #controls {
+            margin-top: 20px;
+            text-align: center;
+            color: #fff;
+            font-size: 0.8rem;
+        }
+        
+        @media (max-width: 650px) {
+            #game-container {
+                width: 300px;
+                height: 200px;
+            }
+            
+            #paddle-left, #paddle-right {
+                height: 40px;
+                top: 80px;
+            }
+            
+            #ball {
+                width: 10px;
+                height: 10px;
+                top: 95px;
+                left: 145px;
+            }
+            
+            #score-container {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-container">
+        <div class="stars"></div>
+    </div>
+
+    <header>
+        <h1 class="neon-title">Pong</h1>
+        <a href="../index.html" class="back-btn">← Back to Arcade</a>
+    </header>
+
+    <main>
+        <div id="score-container">
+            <div id="player-score">0</div>
+            <div id="computer-score">0</div>
+        </div>
+        
+        <div id="game-container">
+            <div id="center-line"></div>
+            <div id="paddle-left"></div>
+            <div id="paddle-right"></div>
+            <div id="ball"></div>
+            <div id="game-over">
+                <h2 id="winner-text">GAME OVER</h2>
+                <button id="restart-btn">Play Again</button>
+            </div>
+        </div>
+        
+        <div id="controls">
+            <p>Use mouse or touch to move your paddle (left)</p>
+            <p>First to 5 points wins!</p>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2023 Retro Arcade | All games playable in browser</p>
+    </footer>
+
+    <audio id="paddle-hit" src="../assets/audio/paddle-hit.mp3" preload="auto"></audio>
+    <audio id="wall-hit" src="../assets/audio/wall-hit.mp3" preload="auto"></audio>
+    <audio id="score-sound" src="../assets/audio/score.mp3" preload="auto"></audio>
+    <audio id="game-over-sound" src="../assets/audio/game-over.mp3" preload="auto"></audio>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Game elements
+            const gameContainer = document.getElementById('game-container');
+            const paddleLeft = document.getElementById('paddle-left');
+            const paddleRight = document.getElementById('paddle-right');
+            const ball = document.getElementById('ball');
+            const playerScoreElement = document.getElementById('player-score');
+            const computerScoreElement = document.getElementById('computer-score');
+            const gameOverElement = document.getElementById('game-over');
+            const winnerTextElement = document.getElementById('winner-text');
+            const restartBtn = document.getElementById('restart-btn');
+            
+            // Sound elements
+            const paddleHitSound = document.getElementById('paddle-hit');
+            const wallHitSound = document.getElementById('wall-hit');
+            const scoreSound = document.getElementById('score-sound');
+            const gameOverSound = document.getElementById('game-over-sound');
+            
+            // Game variables
+            let gameWidth, gameHeight, paddleHeight;
+            let ballX, ballY, ballSpeedX, ballSpeedY, ballSize;
+            let paddleLeftY, paddleRightY, paddleWidth, paddleSpeed;
+            let playerScore, computerScore;
+            let isGameOver = false;
+            let animationFrameId;
+            
+            // Initialize game
+            function initGame() {
+                // Set dimensions based on container size
+                gameWidth = gameContainer.clientWidth;
+                gameHeight = gameContainer.clientHeight;
+                
+                // Paddle dimensions
+                paddleHeight = parseInt(window.getComputedStyle(paddleLeft).height);
+                paddleWidth = parseInt(window.getComputedStyle(paddleLeft).width);
+                paddleLeftY = (gameHeight - paddleHeight) / 2;
+                paddleRightY = (gameHeight - paddleHeight) / 2;
+                paddleSpeed = gameHeight * 0.01;
+                
+                // Ball dimensions and position
+                ballSize = parseInt(window.getComputedStyle(ball).width);
+                ballX = gameWidth / 2 - ballSize / 2;
+                ballY = gameHeight / 2 - ballSize / 2;
+                resetBall();
+                
+                // Reset scores
+                playerScore = 0;
+                computerScore = 0;
+                playerScoreElement.textContent = playerScore;
+                computerScoreElement.textContent = computerScore;
+                
+                // Hide game over screen
+                gameOverElement.style.display = 'none';
+                isGameOver = false;
+                
+                // Start game loop
+                if (animationFrameId) {
+                    cancelAnimationFrame(animationFrameId);
+                }
+                gameLoop();
+            }
+            
+            // Reset ball position and speed
+            function resetBall() {
+                ballX = gameWidth / 2 - ballSize / 2;
+                ballY = gameHeight / 2 - ballSize / 2;
+                
+                // Random direction
+                ballSpeedX = (Math.random() > 0.5 ? 1 : -1) * (gameWidth * 0.005);
+                ballSpeedY = (Math.random() * 2 - 1) * (gameHeight * 0.005);
+                
+                // Ensure minimum vertical speed
+                if (Math.abs(ballSpeedY) < gameHeight * 0.002) {
+                    ballSpeedY = (ballSpeedY >= 0 ? 1 : -1) * (gameHeight * 0.002);
+                }
+            }
+            
+            // Update game state
+            function update() {
+                if (isGameOver) return;
+                
+                // Move ball
+                ballX += ballSpeedX;
+                ballY += ballSpeedY;
+                
+                // Ball collision with top and bottom walls
+                if (ballY <= 0 || ballY + ballSize >= gameHeight) {
+                    ballSpeedY = -ballSpeedY;
+                    wallHitSound.currentTime = 0;
+                    wallHitSound.play().catch(e => console.log('Audio play error:', e));
+                }
+                
+                // Ball collision with paddles
+                if (ballX <= paddleWidth + 10 && 
+                    ballY + ballSize >= paddleLeftY && 
+                    ballY <= paddleLeftY + paddleHeight) {
+                    
+                    // Calculate bounce angle based on where ball hits paddle
+                    const hitPosition = (ballY + ballSize/2 - paddleLeftY) / paddleHeight;
+                    const bounceAngle = hitPosition * Math.PI - Math.PI/2;
+                    
+                    // Adjust ball direction and slightly increase speed
+                    const speed = Math.sqrt(ballSpeedX * ballSpeedX + ballSpeedY * ballSpeedY) * 1.05;
+                    ballSpeedX = Math.cos(bounceAngle) * speed;
+                    ballSpeedY = Math.sin(bounceAngle) * speed;
+                    
+                    // Ensure ball moves away from paddle
+                    if (ballSpeedX <= 0) ballSpeedX = -ballSpeedX;
+                    
+                    paddleHitSound.currentTime = 0;
+                    paddleHitSound.play().catch(e => console.log('Audio play error:', e));
+                }
+                
+                if (ballX + ballSize >= gameWidth - paddleWidth - 10 && 
+                    ballY + ballSize >= paddleRightY && 
+                    ballY <= paddleRightY + paddleHeight) {
+                    
+                    // Calculate bounce angle based on where ball hits paddle
+                    const hitPosition = (ballY + ballSize/2 - paddleRightY) / paddleHeight;
+                    const bounceAngle = hitPosition * Math.PI - Math.PI/2;
+                    
+                    // Adjust ball direction and slightly increase speed
+                    const speed = Math.sqrt(ballSpeedX * ballSpeedX + ballSpeedY * ballSpeedY) * 1.05;
+                    ballSpeedX = -Math.cos(bounceAngle) * speed;
+                    ballSpeedY = Math.sin(bounceAngle) * speed;
+                    
+                    // Ensure ball moves away from paddle
+                    if (ballSpeedX >= 0) ballSpeedX = -ballSpeedX;
+                    
+                    paddleHitSound.currentTime = 0;
+                    paddleHitSound.play().catch(e => console.log('Audio play error:', e));
+                }
+                
+                // Ball out of bounds (scoring)
+                if (ballX <= 0) {
+                    computerScore++;
+                    computerScoreElement.textContent = computerScore;
+                    scoreSound.currentTime = 0;
+                    scoreSound.play().catch(e => console.log('Audio play error:', e));
+                    checkWinner();
+                    resetBall();
+                }
+                
+                if (ballX + ballSize >= gameWidth) {
+                    playerScore++;
+                    playerScoreElement.textContent = playerScore;
+                    scoreSound.currentTime = 0;
+                    scoreSound.play().catch(e => console.log('Audio play error:', e));
+                    checkWinner();
+                    resetBall();
+                }
+                
+                // Computer AI
+                const paddleCenter = paddleRightY + paddleHeight / 2;
+                const ballCenter = ballY + ballSize / 2;
+                
+                // Only move if ball is moving toward computer
+                if (ballSpeedX > 0) {
+                    // Add some difficulty - computer doesn't always follow perfectly
+                    const difficulty = 0.8; // 1.0 is perfect, lower is easier
+                    if (paddleCenter < ballCenter - paddleHeight/6) {
+                        paddleRightY += paddleSpeed * difficulty;
+                    } else if (paddleCenter > ballCenter + paddleHeight/6) {
+                        paddleRightY -= paddleSpeed * difficulty;
+                    }
+                }
+                
+                // Keep paddles within bounds
+                paddleLeftY = Math.max(0, Math.min(gameHeight - paddleHeight, paddleLeftY));
+                paddleRightY = Math.max(0, Math.min(gameHeight - paddleHeight, paddleRightY));
+            }
+            
+            // Draw game elements
+            function draw() {
+                // Update paddle positions
+                paddleLeft.style.top = `${paddleLeftY}px`;
+                paddleRight.style.top = `${paddleRightY}px`;
+                
+                // Update ball position
+                ball.style.left = `${ballX}px`;
+                ball.style.top = `${ballY}px`;
+            }
+            
+            // Check if someone won
+            function checkWinner() {
+                const winningScore = 5;
+                
+                if (playerScore >= winningScore) {
+                    gameOver('YOU WIN!');
+                } else if (computerScore >= winningScore) {
+                    gameOver('COMPUTER WINS!');
+                }
+            }
+            
+            // Game over
+            function gameOver(message) {
+                isGameOver = true;
+                winnerTextElement.textContent = message;
+                gameOverElement.style.display = 'flex';
+                gameOverSound.play().catch(e => console.log('Audio play error:', e));
+            }
+            
+            // Game loop
+            function gameLoop() {
+                update();
+                draw();
+                animationFrameId = requestAnimationFrame(gameLoop);
+            }
+            
+            // Handle mouse/touch movement
+            function handleMouseMove(e) {
+                if (isGameOver) return;
+                
+                const gameRect = gameContainer.getBoundingClientRect();
+                const relativeY = e.clientY - gameRect.top;
+                
+                // Update paddle position based on mouse/touch
+                paddleLeftY = relativeY - paddleHeight / 2;
+            }
+            
+            // Event listeners
+            gameContainer.addEventListener('mousemove', handleMouseMove);
+            gameContainer.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                handleMouseMove(e.touches[0]);
+            }, { passive: false });
+            
+            // Restart game
+            restartBtn.addEventListener('click', initGame);
+            
+            // Handle window resize
+            window.addEventListener('resize', () => {
+                // Recalculate dimensions and reset game
+                initGame();
+            });
+            
+            // Start game
+            initGame();
+        });
+    </script>
+</body>
+</html>

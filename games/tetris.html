@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tetris - Retro Arcade</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/games.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap">
+    <style>
+        #game-container {
+            width: 300px;
+            height: 600px;
+            margin: 0 auto;
+            background-color: #000;
+            position: relative;
+            border: 5px solid #00ffff;
+            box-shadow: 0 0 20px #00ffff;
+        }
+        
+        #game-board {
+            width: 100%;
+            height: 100%;
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            grid-template-rows: repeat(20, 1fr);
+        }
+        
+        .tetromino {
+            border: 1px solid rgba(0, 0, 0, 0.3);
+        }
+        
+        .I { background-color: #00ffff; }
+        .J { background-color: #0000ff; }
+        .L { background-color: #ff7700; }
+        .O { background-color: #ffff00; }
+        .S { background-color: #00ff00; }
+        .T { background-color: #aa00ff; }
+        .Z { background-color: #ff0000; }
+        
+        #score-container {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+            color: #00ffff;
+            text-shadow: 0 0 5px #00ffff;
+        }
+        
+        #next-piece {
+            width: 100px;
+            height: 100px;
+            background-color: #000;
+            border: 3px solid #00ffff;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            margin-left: 20px;
+        }
+        
+        #game-over {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #ff0000;
+            font-size: 24px;
+            display: none;
+        }
+        
+        #restart-btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #00ffff;
+            color: #000;
+            border: none;
+            cursor: pointer;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 16px;
+        }
+        
+        #controls {
+            margin-top: 20px;
+            text-align: center;
+            color: #fff;
+            font-size: 0.8rem;
+        }
+        
+        .game-info {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        @media (max-width: 500px) {
+            #game-container {
+                width: 250px;
+                height: 500px;
+            }
+            
+            #score-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            #next-piece {
+                margin: 10px 0 0 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-container">
+        <div class="stars"></div>
+    </div>
+
+    <header>
+        <h1 class="neon-title">Tetris</h1>
+        <a href="../index.html" class="back-btn">← Back to Arcade</a>
+    </header>
+
+    <main>
+        <div id="score-container">
+            <div class="game-info">
+                <h2>Score: <span id="score">0</span></h2>
+                <h3>Level: <span id="level">1</span></h3>
+                <h3>Lines: <span id="lines">0</span></h3>
+            </div>
+            <div>
+                <h3>Next:</h3>
+                <div id="next-piece"></div>
+            </div>
+        </div>
+        
+        <div id="game-container">
+            <div id="game-board"></div>
+            <div id="game-over">
+                <h2>GAME OVER</h2>
+                <p>Your Score: <span id="final-score">0</span></p>
+                <button id="restart-btn">Play Again</button>
+            </div>
+        </div>
+        
+        <div id="controls">
+            <p>← → : Move left/right | ↑ : Rotate | ↓ : Soft drop | Space : Hard drop</p>
+            <p>Mobile: Swipe left/right to move, tap to rotate, swipe down for soft drop</p>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2023 Retro Arcade | All games playable in browser</p>
+    </footer>
+
+    <audio id="move-sound" src="../assets/audio/move.mp3" preload="auto"></audio>
+    <audio id="rotate-sound" src="../assets/audio/rotate.mp3" preload="auto"></audio>
+    <audio id="drop-sound" src="../assets/audio/drop.mp3" preload="auto"></audio>
+    <audio id="clear-sound" src="../assets/audio/clear.mp3" preload="auto"></audio>
+    <audio id="game-over-sound" src="../assets/audio/game-over.mp3" preload="auto"></audio>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Game elements
+            const gameBoard = document.getElementById('game-board');
+            const nextPieceDisplay = document.getElementById('next-piece');
+            const scoreElement = document.getElementById('score');
+            const levelElement = document.getElementById('level');
+            const linesElement = document.getElementById('lines');
+            const finalScoreElement = document.getElementById('final-score');
+            const gameOverElement = document.getElementById('game-over');
+            const restartBtn = document.getElementById('restart-btn');
+            
+            // Sound elements
+            const moveSound = document.getElementById('move-sound');
+            const rotateSound = document.getElementById('rotate-sound');
+            const dropSound = document.getElementById('drop-sound');
+            const clearSound = document.getElementById('clear-sound');
+            const gameOverSound = document.getElementById('game-over-sound');
+            
+            // Game constants
+            const BOARD_WIDTH = 10;
+            const BOARD_HEIGHT = 20;
+            const TETROMINOS = {
+                'I': {
+                    shape: [
+                        [0, 0, 0, 0],
+                        [1, 1, 1, 1],
+                        [0, 0, 0, 0],
+                        [0, 0, 0, 0]
+                    ],
+                    color: 'I'
+                },
+                'J': {
+                    shape: [
+                        [1, 0, 0],
+                        [1, 1, 1],
+                        [0, 0, 0]
+                    ],
+                    color: 'J'
+                },
+                'L': {
+                    shape: [
+                        [0, 0, 1],
+                        [1, 1, 1],
+                        [0, 0, 0]
+                    ],
+                    color: 'L'
+                },
+                'O': {
+                    shape: [
+                        [1, 1],
+                        [1, 1]
+                    ],
+                    color: 'O'
+                },
+                'S': {
+                    shape: [
+                        [0, 1, 1],
+                        [1, 1, 0],
+                        [0, 0, 0]
+                    ],
+                    color: 'S'
+                },
+                'T': {
+                    shape: [
+                        [0, 1, 0],
+                        [1, 1, 1],
+                        [0, 0, 0]
+                    ],
+                    color: 'T'
+                },
+                'Z': {
+                    shape: [
+                        [1, 1, 0],
+                        [0, 1, 1],
+                        [0, 0, 0]
+                    ],
+                    color: 'Z'
+                }
+            };
+            
+            // Game variables
+            let board = createBoard();
+            let currentPiece = null;
+            let nextPiece = null;
+            let currentPosition = { x: 0, y: 0 };
+            let score = 0;
+            let level = 1;
+            let lines = 0;
+            let gameSpeed = 1000;
+            let gameInterval;
+            let touchStartX = 0;
+            let touchStartY = 0;
+            let isGameOver = false;
+            
+            // Create empty game board
+            function createBoard() {
+                const board = [];
+                for (let y = 0; y < BOARD_HEIGHT; y++) {
+                    board[y] = [];
+                    for (let x = 0; x < BOARD_WIDTH; x++) {
+                        board[y][x] = 0;
+                    }
+                }
+                return board;
+            }
+            
+            // Initialize game
+            function initGame() {
+                // Reset game variables
+                board = createBoard();
+                score = 0;
+                level = 1;
+                lines = 0;
+                gameSpeed = 1000;
+                isGameOver = false;
+                
+                // Update display
+                scoreElement.textContent = score;
+                levelElement.textContent = level;
+                linesElement.textContent = lines;
+                gameOverElement.style.display = 'none';
+                
+                // Generate pieces
+                if (!nextPiece) {
+                    nextPiece = generateRandomPiece();
+                }
+                getNewPiece();
+                
+                // Start game loop
+                clearInterval(gameInterval);
+                gameInterval = setInterval(moveDown, gameSpeed);
+                
+                // Draw initial state
+                draw();
+            }
+            
+            // Generate a random tetromino
+            function generateRandomPiece() {
+                const pieces = 'IJLOSTZ';
+                const randomPiece = pieces[Math.floor(Math.random() * pieces.length)];
+                return {
+                    ...TETROMINOS[randomPiece],
+                    id: randomPiece
+                };
+            }
+            
+            // Get new piece and set starting position
+            function getNewPiece() {
+                currentPiece = nextPiece;
+                nextPiece = generateRandomPiece();
+                
+                // Set starting position (centered at top)
+                currentPosition = {
+                    x: Math.floor((BOARD_WIDTH - currentPiece.shape[0].length) / 2),
+                    y: 0
+                };
+                
+                // Check if new piece can be placed (game over condition)
+                if (!isValidMove(currentPosition.x, currentPosition.y, currentPiece.shape)) {
+                    gameOver();
+                    return false;
+                }
+                
+                // Draw next piece preview
+                drawNextPiece();
+                return true;
+            }
+            
+            // Draw the game board
+            function draw() {
+                // Clear the board
+                gameBoard.innerHTML = '';
+                
+                // Draw the fixed pieces on the board
+                for (let y = 0; y < BOARD_HEIGHT; y++) {
+                    for (let x = 0; x < BOARD_WIDTH; x++) {
+                        if (board[y][x]) {
+                            const cell = document.createElement('div');
+                            cell.classList.add('tetromino', board[y][x]);
+                            cell.style.gridRowStart = y + 1;
+                            cell.style.gridColumnStart = x + 1;
+                            gameBoard.appendChild(cell);
+                        }
+                    }
+                }
+                
+                // Draw the current piece
+                if (currentPiece) {
+                    for (let y = 0; y < currentPiece.shape.length; y++) {
+                        for (let x = 0; x < currentPiece.shape[y].length; x++) {
+                            if (currentPiece.shape[y][x]) {
+                                const cell = document.createElement('div');
+                                cell.classList.add('tetromino', currentPiece.color);
+                                cell.style.gridRowStart = currentPosition.y + y + 1;
+                                cell.style.gridColumnStart = currentPosition.x + x + 1;
+                                gameBoard.appendChild(cell);
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Draw the next piece preview
+            function drawNextPiece() {
+                // Clear the preview
+                nextPieceDisplay.innerHTML = '';
+                
+                // Draw the next piece
+                for (let y = 0; y < nextPiece.shape.length; y++) {
+                    for (let x = 0; x < nextPiece.shape[y].length; x++) {
+                        if (nextPiece.shape[y][x]) {
+                            const cell = document.createElement('div');
+                            cell.classList.add('tetromino', nextPiece.color);
+                            // Center the piece in the preview
+                            const offsetY = (4 - nextPiece.shape.length) / 2;
+                            const offsetX = (4 - nextPiece.shape[y].length) / 2;
+                            cell.style.gridRowStart = Math.floor(y + offsetY + 1);
+                            cell.style.gridColumnStart = Math.floor(x + offsetX + 1);
+                            nextPieceDisplay.appendChild(cell);
+                        }
+                    }
+                }
+            }
+            
+            // Check if move is valid
+            function isValidMove(x, y, shape) {
+                for (let pieceY = 0; pieceY < shape.length; pieceY++) {
+                    for (let pieceX = 0; pieceX < shape[pieceY].length; pieceX++) {
+                        if (shape[pieceY][pieceX]) {
+                            const boardX = x + pieceX;
+                            const boardY = y + pieceY;
+                            
+                            // Check boundaries
+                            if (boardX < 0 || boardX >= BOARD_WIDTH || boardY >= BOARD_HEIGHT) {
+                                return false;
+                            }
+                            
+                            // Check collision with existing pieces
+                            if (boardY >= 0 && board[boardY][boardX]) {
+                                return false;
+                            }
+                        }
+                    }
+                }
+                return true;
+            }
+            
+            // Rotate the current piece
+            function rotate() {
+                if (!currentPiece || currentPiece.id === 'O') return; // O piece doesn't rotate
+                
+                const rotated = [];
+                const M = currentPiece.shape.length;
+                
+                // Create rotated matrix
+                for (let y = 0; y < M; y++) {
+                    rotated[y] = [];
+                    for (let x = 0; x < M; x++) {
+                        rotated[y][x] = currentPiece.shape[M - 1 - x][y];
+                    }
+                }
+                
+                // Check if rotation is valid
+                if (isValidMove(currentPosition.x, currentPosition.y, rotated)) {
+                    currentPiece.shape = rotated;
+                    rotateSound.currentTime = 0;
+                    rotateSound.play().catch(e => console.log('Audio play error:', e));
+                    draw();
+                }
+            }
+            
+            // Move piece left
+            function moveLeft() {
+                if (isValidMove(currentPosition.x - 1, currentPosition.y, currentPiece.shape)) {
+                    currentPosition.x--;
+                    moveSound.currentTime = 0;
+                    moveSound.play().catch(e => console.log('Audio play error:', e));
+                    draw();
+                }
+            }
+            
+            // Move piece right
+            function moveRight() {
+                if (isValidMove(currentPosition.x + 1, currentPosition.y, currentPiece.shape)) {
+                    currentPosition.x++;
+                    moveSound.currentTime = 0;
+                    moveSound.play().catch(e => console.log('Audio play error:', e));
+                    draw();
+                }
+            }
+            
+            // Move piece down
+            function moveDown() {
+                if (isValidMove(currentPosition.x, currentPosition.y + 1, currentPiece.shape)) {
+                    currentPosition.y++;
+                    draw();
+                    return true;
+                } else {
+                    lockPiece();
+                    return false;
+                }
+            }
+            
+            // Hard drop - move piece all the way down
+            function hardDrop() {
+                while (moveDown()) {
+                    // Keep moving down until it can't move anymore
+                }
+                dropSound.currentTime = 0;
+                dropSound.play().catch(e => console.log('Audio play error:', e));
+            }
+            
+            // Lock the current piece in place
+            function lockPiece() {
+                // Add the piece to the board
+                for (let y = 0; y < currentPiece.shape.length; y++) {
+                    for (let x = 0; x < currentPiece.shape[y].length; x++) {
+                        if (currentPiece.shape[y][x]) {
+                            const boardY = currentPosition.y + y;
+                            const boardX = currentPosition.x + x;
+                            if (boardY >= 0) { // Only add if within the board
+                                board[boardY][boardX] = currentPiece.color;
+                            }
+                        }
+                    }
+                }
+                
+                // Check for completed lines
+                checkLines();
+                
+                // Get new piece
+                getNewPiece();
+                
+                // Play sound
+                dropSound.currentTime = 0;
+                dropSound.play().catch(e => console.log('Audio play error:', e));
+            }
+            
+            // Check for completed lines
+            function checkLines() {
+                let linesCleared = 0;
+                
+                for (let y = BOARD_HEIGHT - 1; y >= 0; y--) {
+                    let isLineComplete = true;
+                    
+                    for (let x = 0; x < BOARD_WIDTH; x++) {
+                        if (!board[y][x]) {
+                            isLineComplete = false;
+                            break;
+                        }
+                    }
+                    
+                    if (isLineComplete) {
+                        // Remove the line
+                        for (let yy = y; yy > 0; yy--) {
+                            for (let x = 0; x < BOARD_WIDTH; x++) {
+                                board[yy][x] = board[yy - 1][x];
+                            }
+                        }
+                        
+                        // Clear the top line
+                        for (let x = 0; x < BOARD_WIDTH; x++) {
+                            board[0][x] = 0;
+                        }
+                        
+                        // Move the check position up (since we removed a line)
+                        y++;
+                        
+                        // Increment counters
+                        linesCleared++;
+                        lines++;
+                    }
+                }
+                
+                // Update score based on lines cleared
+                if (linesCleared > 0) {
+                    // Play clear sound
+                    clearSound.currentTime = 0;
+                    clearSound.play().catch(e => console.log('Audio play error:', e));
+                    
+                    // Calculate score (more points for multiple lines)
+                    const linePoints = [0, 40, 100, 300, 1200];
+                    score += linePoints[linesCleared] * level;
+                    
+                    // Update level
+                    level = Math.floor(lines / 10) + 1;
+                    
+                    // Update game speed
+                    gameSpeed = Math.max(100, 1000 - (level - 1) * 100);
+                    clearInterval(gameInterval);
+                    gameInterval = setInterval(moveDown, gameSpeed);
+                    
+                    // Update display
+                    scoreElement.textContent = score;
+                    levelElement.textContent = level;
+                    linesElement.textContent = lines;
+                }
+            }
+            
+            // Game over
+            function gameOver() {
+                clearInterval(gameInterval);
+                isGameOver = true;
+                gameOverSound.play().catch(e => console.log('Audio play error:', e));
+                finalScoreElement.textContent = score;
+                gameOverElement.style.display = 'flex';
+            }
+            
+            // Handle keyboard input
+            document.addEventListener('keydown', (e) => {
+                if (isGameOver) return;
+                
+                switch (e.key) {
+                    case 'ArrowLeft':
+                        moveLeft();
+                        break;
+                    case 'ArrowRight':
+                        moveRight();
+                        break;
+                    case 'ArrowDown':
+                        moveDown();
+                        break;
+                    case 'ArrowUp':
+                        rotate();
+                        break;
+                    case ' ':
+                        hardDrop();
+                        break;
+                }
+            });
+            
+            // Handle touch input for mobile
+            gameBoard.addEventListener('touchstart', (e) => {
+                if (isGameOver) return;
+                
+                touchStartX = e.changedTouches[0].screenX;
+                touchStartY = e.changedTouches[0].screenY;
+                e.preventDefault();
+            }, { passive: false });
+            
+            gameBoard.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+            }, { passive: false });
+            
+            gameBoard.addEventListener('touchend', (e) => {
+                if (isGameOver) return;
+                
+                const touchEndX = e.changedTouches[0].screenX;
+                const touchEndY = e.changedTouches[0].screenY;
+                const dx = touchEndX - touchStartX;
+                const dy = touchEndY - touchStartY;
+                
+                // Determine swipe direction
+                if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+                    // Horizontal swipe
+                    if (dx > 0) {
+                        moveRight();
+                    } else {
+                        moveLeft();
+                    }
+                } else if (Math.abs(dy) > 50 && Math.abs(dy) > Math.abs(dx)) {
+                    // Vertical swipe
+                    if (dy > 0) {
+                        moveDown();
+                    }
+                } else if (Math.abs(dx) < 10 && Math.abs(dy) < 10) {
+                    // Tap (for rotation)
+                    rotate();
+                }
+                
+                e.preventDefault();
+            }, { passive: false });
+            
+            // Restart game
+            restartBtn.addEventListener('click', initGame);
+            
+            // Start game
+            initGame();
+        });
+    </script>
+</body>
+</html>
